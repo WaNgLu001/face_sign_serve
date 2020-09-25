@@ -13,9 +13,6 @@ const {
   getSignTime
 
 } = require('../utils/sql');
-const {
-  json
-} = require('express');
 let access_token = {
   token: '',
   timer: ''
@@ -130,8 +127,8 @@ router.post('/search', async function (req, res) {
 function scheduleTime() {
   // 每周重置数据库
   schedule.scheduleJob({
-    hour: 23,
-    minute: 59,
+    hour: 24,
+    minute: 00,
     dayOfWeek: '7'
   }, function () {
     reset_week()

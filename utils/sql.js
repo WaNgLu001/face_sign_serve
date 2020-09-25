@@ -1,4 +1,5 @@
 const mysql = require('mysql') // 连接数据库
+const sendEmail = require('./email')
 const conntection = mysql.createConnection({
     host: '119.3.254.20',
     user: 'root',
@@ -54,6 +55,7 @@ const reset_week = async () => {
     const data = await sqlFun(`SELECT WEEK FROM sign_week LIMIT 1`)
     const week = data[0].WEEK + 1
     sqlFun(`UPDATE sign_week SET signIn = '-1', mon = 0 , tues = 0 , wed = 0 , thur = 0 , fri = 0 , sat = 0 , sun = 0, WEEK ='${week}' `)
+    sendEmail('周')
 }
 
 // 每天更新数据库
@@ -71,6 +73,7 @@ const reset_day = async () => {
             sqlFun(`UPDATE sign_week SET signIn='-1',${week}='1' WHERE uid = '${uid}'`)
         }
     });
+    sendEmail('日')
 }
 // 根据周数查询当日已签到时长
 const getSignTime = async (week, uid) => {

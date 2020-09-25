@@ -1,45 +1,37 @@
 const nodemailer = require("nodemailer");
 
-function emailTo(email, subject, text, html, callback) {
+module.exports = function sendEmail(type, status) {
     var transporter = nodemailer.createTransport({
-        host: '884589944@qq.com',
+        host: 'pop.qq.com',
+        port: 465,
         secureConnection: true,
-        port: 456,
+        // 我们需要登录到网页邮箱中，然后配置SMTP和POP3服务器的密码
         auth: {
-            user: '884589944@qq.com',
-            pass: mailPwd //授权码,通过QQ获取  
-
+            user: 'lg1065849@qq.com',
+            pass: 'cvywwvsxhtpibdii'
         }
     });
-    var mailOptions = {
-        from: mailFrom, // 发送者  
-        to: email, // 接受者,可以同时发送多个,以逗号隔开  
-        subject: subject, // 标题  
-    };
-    if (text != undefined) {
-        mailOptions.text = text; // 文本  
-    }
-    if (html != undefined) {
-        mailOptions.html = html; // html  
-    }
+    var to_name = type;
+    var message = status;
 
-    var result = {
-        httpCode: 200,
-        message: '发送成功!',
-    }
-    try {
-        transporter.sendMail(mailOptions, function (err, info) {
-            if (err) {
-                result.httpCode = 500;
-                result.message = err;
-                callback(result);
-                return;
-            }
-            callback(result);
-        });
-    } catch (err) {
-        result.httpCode = 500;
-        result.message = err;
-        callback(result);
-    }
+    var sendHtml =
+        `<div>Hi,每${to_name}更新数据库已经完成,请查看数据库是否正常！</div>`;
+
+    var mailOptions = {
+        // 发送邮件的地址
+        from: '"发送人" <lg1065849@qq.com>', // login user must equal to this user
+        // 接收邮件的地址
+        to: "lg1065849@qq.com", // xrj0830@gmail.com
+        // 邮件主题
+        subject: `每${type}更新`,
+        // 以HTML的格式显示，这样可以显示图片、链接、字体颜色等信息
+        html: sendHtml
+    };
+
+    transporter.sendMail(mailOptions, (error, info = {}) => {
+        if (error) {
+            return console.log(error);
+        }
+        console.log('Message sent');
+    });
 }
