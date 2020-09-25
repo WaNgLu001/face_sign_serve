@@ -48,7 +48,7 @@ const savaSignTime = (sign_time_long, day, uid) => {
 }
 
 // 每周重置数据库
-const reset = async () => {
+const reset_week = async () => {
     // 先将所有数据查询出来，然后保存到另一张表中
     // 需要将当前周数+1
     const data = await sqlFun(`SELECT WEEK FROM sign_week LIMIT 1`)
@@ -56,7 +56,22 @@ const reset = async () => {
     sqlFun(`UPDATE sign_week SET signIn = '-1', mon = 0 , tues = 0 , wed = 0 , thur = 0 , fri = 0 , sat = 0 , sun = 0, WEEK ='${week}' `)
 }
 
-
+// 每天更新数据库
+const reset_day = async () => {
+    //  已签到，未签退，当日时长自动为1，并且将签到时间重置为-1
+    const weekArr = ['mon', 'tues', 'wed', 'thur', 'fri', 'sat', 'sun']
+    const week = weekArr[new Date().getDay() - 1]
+    const data = await sqlFun(`SELECT * FROM sign_week`)
+    data.forEach(element => {
+        const {
+            signIn,
+            uid
+        } = element
+        if (signIn !== '-1') {
+            sqlFun(`UPDATE sign_week SET signIn='-1',${week}='1' WHERE uid = '${uid}'`)
+        }
+    });
+}
 module.exports = {
     test,
     signIn,
@@ -64,6 +79,7 @@ module.exports = {
     findSignTime,
     savaSignTime,
     sqlFun,
-    reset
+    reset_week,
+    reset_day
 }
 // 
