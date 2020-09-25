@@ -60,7 +60,7 @@ const reset_week = async () => {
 const reset_day = async () => {
     //  已签到，未签退，当日时长自动为1，并且将签到时间重置为-1
     const weekArr = ['mon', 'tues', 'wed', 'thur', 'fri', 'sat', 'sun']
-    const week = weekArr[new Date().getDay() - 1]
+    let week = weekArr[new Date().getDay() - 1]
     const data = await sqlFun(`SELECT * FROM sign_week`)
     data.forEach(element => {
         const {
@@ -72,6 +72,10 @@ const reset_day = async () => {
         }
     });
 }
+// 根据周数查询当日已签到时长
+const getSignTime = async (week, uid) => {
+    return sqlFun(`SELECT ${week} FROM sign_week WHERE uid = '${uid}'`)
+}
 module.exports = {
     test,
     signIn,
@@ -80,6 +84,7 @@ module.exports = {
     savaSignTime,
     sqlFun,
     reset_week,
-    reset_day
+    reset_day,
+    getSignTime
 }
 // 

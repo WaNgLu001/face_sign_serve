@@ -9,36 +9,17 @@ const {
   findSignTime,
   savaSignTime,
   reset_week,
-  reset_day
+  reset_day,
+  getSignTime
 
-} = require('../utils/sql')
+} = require('../utils/sql');
+const {
+  json
+} = require('express');
 let access_token = {
   token: '',
   timer: ''
 }
-
-async function test3() {
-
-  const uid = 'wl'
-  const data = await findSignTime(uid)
-  if (data[0].signIn === '-1')
-    return
-  const sign_time_long = ((Date.now() - signIn) / 60000 / 60).toFixed(2) // 小时
-  console.log(sign_time_long)
-  const weekArr = ['mon', 'tues', 'wed', 'thur', 'fri', 'sat', 'sun']
-  const week = weekArr[new Date().getDay() - 1]
-  console.log(week)
-  savaSignTime(sign_time_long, week, uid).then(function (data2) {
-    console.log(data2)
-  })
-
-}
-
-// test3()
-// test2().then(function (result) {
-//   console.log(result)
-// })
-
 // 获取access_token 的函数
 async function getToken() {
   const param = qs.stringify({
@@ -55,7 +36,7 @@ async function faceSearch(imgBase) {
   const data = {
     image: imgBase,
     image_type: 'BASE64',
-    group_id_list: 'test',
+    group_id_list: 'RJB_face,test',
     // liveness_control: 'NORMAL' // 活体检测
   }
   const result = await axios.post(
@@ -74,7 +55,7 @@ router.get('/get_ip', function (req, res, next) {
 
 // 人脸搜索
 router.post('/search', async function (req, res) {
-  const {
+  let {
     type,
     imgBase
   } = req.body // 1 签到 2签退
@@ -82,10 +63,24 @@ router.post('/search', async function (req, res) {
   const {
     data
   } = await faceSearch(imgBase)
+  if (data.result.user_list[0].score - 90 < 0) {
+    res.status(200).json({
+      status: 3,
+      msg: '人脸库匹配失败,请将照片上传至人脸库中重试！'
+    })
+    return
+  }
   // 拿到uid之后，修改数据库
   const uid = data.result.user_list[0].user_id
   // 根据uid查询签到时长
   const data1 = await findSignTime(uid)
+  if (!data1[0]) {
+    res.status(200).json({
+      status: 4,
+      msg: '您的信息还未上传至数据库！'
+    })
+    return
+  }
   const signInTime = data1[0].signIn
   // 根据uid查询用户姓名
   const data2 = await findUserName(uid)
@@ -106,14 +101,21 @@ router.post('/search', async function (req, res) {
     })
   } else {
     // 签退，如果没有签到直接签退，返回错误
-    if (signInTime === '-1') return res.status(200).json({
-      status: '3',
-      msg: `${name}同学,请先签到`
-    })
-    const sign_time_long = ((Date.now() - signInTime) / 60000 / 60).toFixed(2) // 小时
+    if (signInTime === '-1') {
+      res.status(200).json({
+        status: '3',
+        msg: `${name}同学,请先签到`
+      })
+      return
+    }
+    let sign_time_long = ((Date.now() - signInTime) / 60000 / 60).toFixed(2) // 小时
     const weekArr = ['mon', 'tues', 'wed', 'thur', 'fri', 'sat', 'sun']
-    const week = weekArr[new Date().getDay() - 1]
-    console.log(sign_time_long)
+    let week = weekArr[new Date().getDay() - 1]
+    let longtime = await getSignTime(week, uid)
+    longtime = parseFloat(longtime[0][week])
+    sign_time_long = parseFloat(sign_time_long)
+    console.log(sign_time_long, longtime)
+    sign_time_long = (longtime + sign_time_long).toFixed(2)
     const data4 = await savaSignTime(sign_time_long, week, uid)
     if (data4) return res.status(200).json({
       status: 0,
@@ -134,6 +136,7 @@ function scheduleTime() {
   }, function () {
     reset_week()
     InitToken()
+    console.log('每周定时任务执行完毕', Date.now())
   });
   // 每天检测数据库
   var rule = new schedule.RecurrenceRule();
@@ -141,6 +144,7 @@ function scheduleTime() {
   rule.minute = 00
   schedule.scheduleJob(rule, function () {
     reset_day()
+    console.log('每天定时任务执行完毕', Date.now())
   });
 }
 scheduleTime()
@@ -152,5 +156,5 @@ function InitToken() {
     console.log(access_token)
   })
 }
-// InitToken()
+InitToken()
 module.exports = router
