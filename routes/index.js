@@ -2,7 +2,9 @@ var express = require('express')
 var router = express.Router()
 var qs = require('querystring')
 var axios = require('axios')
-const schedule = require('node-schedule');
+const schedule = require('node-schedule')
+const xlsx = require('node-xlsx').default
+const fs = require('fs')
 const {
   signIn,
   findUserName,
@@ -11,12 +13,26 @@ const {
   reset_week,
   reset_day,
   getSignTime
-
-} = require('../utils/sql');
+} = require('../utils/sql')
 let access_token = {
   token: '',
   timer: ''
 }
+function test() {
+  var sheets = xlsx.parse(`${__dirname}//node.xlsx`)
+  console.log(sheets)
+  // 遍历 sheet
+  sheets.forEach(function(sheet) {
+    console.log(sheet['name'])
+    // 读取每行内容
+    for (var rowId in sheet['data']) {
+      console.log(rowId)
+      var row = sheet['data'][rowId]
+      console.log(row)
+    }
+  })
+}
+// test()
 // 获取access_token 的函数
 async function getToken() {
   const param = qs.stringify({
@@ -24,16 +40,17 @@ async function getToken() {
     client_id: '592d7sIQhsnTjMMzyn9vsLlF',
     client_secret: 'hW3BWAhkFrGPrvF1ffrXN6VrQIwjwSsB'
   })
-  const data = await axios.get('https://aip.baidubce.com//oauth/2.0/token?' + param)
+  const data = await axios.get(
+    'https://aip.baidubce.com//oauth/2.0/token?' + param
+  )
   return data
-
 }
 // 发起人脸对比
 async function faceSearch(imgBase) {
   const data = {
     image: imgBase,
     image_type: 'BASE64',
-    group_id_list: 'RJB_face,test',
+    group_id_list: 'RJB_face,test'
     // liveness_control: 'NORMAL' // 活体检测
   }
   const result = await axios.post(
@@ -44,22 +61,17 @@ async function faceSearch(imgBase) {
 }
 
 // 判断当前用户ip是否有效
-router.get('/get_ip', function (req, res, next) {
+router.get('/get_ip', function(req, res, next) {
   res.status(200).json({
     ip: req.ip.split(':')[2] === '59.48.111.138'
   })
 })
 
 // 人脸搜索
-router.post('/search', async function (req, res) {
-  let {
-    type,
-    imgBase
-  } = req.body // 1 签到 2签退
+router.post('/search', async function(req, res) {
+  let { type, imgBase } = req.body // 1 签到 2签退
   imgBase = imgBase.split(',')[1]
-  const {
-    data
-  } = await faceSearch(imgBase)
+  const { data } = await faceSearch(imgBase)
   if (data.result.user_list[0].score - 90 < 0) {
     res.status(200).json({
       status: 3,
@@ -88,14 +100,15 @@ router.post('/search', async function (req, res) {
     if (signInTime !== '-1') {
       return res.status(200).json({
         status: '2',
-        msg: "请勿重复签到"
+        msg: '请勿重复签到'
       })
     }
     const data3 = await signIn(uid, Date.now())
-    if (data3) return res.status(200).json({
-      status: '0',
-      msg: `${name}同学,签到成功`
-    })
+    if (data3)
+      return res.status(200).json({
+        status: '0',
+        msg: `${name}同学,签到成功`
+      })
   } else {
     // 签退，如果没有签到直接签退，返回错误
     if (signInTime === '-1') {
@@ -114,40 +127,43 @@ router.post('/search', async function (req, res) {
     console.log(sign_time_long, longtime)
     sign_time_long = (longtime + sign_time_long).toFixed(2)
     const data4 = await savaSignTime(sign_time_long, week, uid)
-    if (data4) return res.status(200).json({
-      status: 0,
-      msg: `${name}同学,签退成功,今日签到${sign_time_long} h`
-    })
+    if (data4)
+      return res.status(200).json({
+        status: 0,
+        msg: `${name}同学,签退成功,今日签到${sign_time_long} h`
+      })
     console.log(data4)
-
   }
 })
 
 // 定时任务
 function scheduleTime() {
   // 每周重置数据库
-  schedule.scheduleJob({
-    hour: 24,
-    minute: 00,
-    dayOfWeek: '7'
-  }, function () {
-    reset_week()
-    InitToken()
-    console.log('每周定时任务执行完毕', Date.now())
-  });
+  schedule.scheduleJob(
+    {
+      hour: 24,
+      minute: 00,
+      dayOfWeek: '7'
+    },
+    function() {
+      reset_week()
+      InitToken()
+      console.log('每周定时任务执行完毕', Date.now())
+    }
+  )
   // 每天检测数据库
-  var rule = new schedule.RecurrenceRule();
+  var rule = new schedule.RecurrenceRule()
   rule.hour = 24
   rule.minute = 00
-  schedule.scheduleJob(rule, function () {
+  schedule.scheduleJob(rule, function() {
     reset_day()
     console.log('每天定时任务执行完毕', Date.now())
-  });
+  })
 }
 scheduleTime()
 // 获取token
 function InitToken() {
-  getToken().then(function (res1) {
+  getToken().then(function(res1) {
     access_token.token = res1.data.access_token
     access_token.timer = Date.now()
     console.log(access_token)
