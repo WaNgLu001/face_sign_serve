@@ -62,7 +62,7 @@ router.get('/', function (req, res) {
 // 判断当前用户ip是否有效
 router.get('/get_ip', function (req, res, next) {
   res.status(200).json({
-    ip: req.ip.split(':')[2] === '59.48.111.138'
+    ip: req.ip.split(':')[3] === '59.48.111.138'
   })
 })
 
@@ -76,7 +76,14 @@ router.post('/search', async function (req, res) {
   const {
     data
   } = await faceSearch(imgBase)
-  if (data.result.user_list[0].score - 90 < 0) {
+  if (!data.resule) {
+    res.status(200).json({
+      status: '5',
+      msg: '人脸库匹配失败,请将照片上传至人脸库中重试！'
+    })
+    return
+  }
+  if (data.result.user_list[0].score - 70 < 0) {
     res.status(200).json({
       status: 3,
       msg: '人脸库匹配失败,请将照片上传至人脸库中重试！'
