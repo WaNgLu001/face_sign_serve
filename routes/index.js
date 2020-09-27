@@ -4,7 +4,6 @@ var qs = require('querystring')
 var axios = require('axios')
 const schedule = require('node-schedule')
 const xlsx = require('node-xlsx').default
-const fs = require('fs')
 const {
   signIn,
   findUserName,
@@ -12,25 +11,21 @@ const {
   savaSignTime,
   reset_week,
   reset_day,
-  getSignTime
+  getSignTime,
+  setFaceInfo
 } = require('../utils/sql')
 let access_token = {
   token: '',
   timer: ''
 }
-function test() {
-  var sheets = xlsx.parse(`${__dirname}//node.xlsx`)
-  console.log(sheets)
-  // 遍历 sheet
-  sheets.forEach(function(sheet) {
-    console.log(sheet['name'])
-    // 读取每行内容
-    for (var rowId in sheet['data']) {
-      console.log(rowId)
-      var row = sheet['data'][rowId]
-      console.log(row)
-    }
-  })
+// 读取xlsx文件中的信息
+async function test() {
+  var sheets = xlsx.parse(`${__dirname}\\test.xlsx`)
+  let FaceInfo = sheets[0].data
+  FaceInfo.shift()
+  const count = await setFaceInfo(FaceInfo)
+  console.log(FaceInfo.length,count)
+  return FaceInfo
 }
 // test()
 // 获取access_token 的函数
@@ -61,17 +56,22 @@ async function faceSearch(imgBase) {
 }
 
 // 判断当前用户ip是否有效
-router.get('/get_ip', function(req, res, next) {
+router.get('/get_ip', function (req, res, next) {
   res.status(200).json({
     ip: req.ip.split(':')[2] === '59.48.111.138'
   })
 })
 
 // 人脸搜索
-router.post('/search', async function(req, res) {
-  let { type, imgBase } = req.body // 1 签到 2签退
+router.post('/search', async function (req, res) {
+  let {
+    type,
+    imgBase
+  } = req.body // 1 签到 2签退
   imgBase = imgBase.split(',')[1]
-  const { data } = await faceSearch(imgBase)
+  const {
+    data
+  } = await faceSearch(imgBase)
   if (data.result.user_list[0].score - 90 < 0) {
     res.status(200).json({
       status: 3,
@@ -119,8 +119,8 @@ router.post('/search', async function(req, res) {
       return
     }
     let sign_time_long = ((Date.now() - signInTime) / 60000 / 60).toFixed(2) // 小时
-    const weekArr = ['mon', 'tues', 'wed', 'thur', 'fri', 'sat', 'sun']
-    let week = weekArr[new Date().getDay() - 1]
+    const weekArr = ['sun', 'mon', 'tues', 'wed', 'thur', 'fri', 'sat']
+    let week = weekArr[new Date().getDay()]
     let longtime = await getSignTime(week, uid)
     longtime = parseFloat(longtime[0][week])
     sign_time_long = parseFloat(sign_time_long)
@@ -139,13 +139,12 @@ router.post('/search', async function(req, res) {
 // 定时任务
 function scheduleTime() {
   // 每周重置数据库
-  schedule.scheduleJob(
-    {
+  schedule.scheduleJob({
       hour: 24,
       minute: 00,
       dayOfWeek: '7'
     },
-    function() {
+    function () {
       reset_week()
       InitToken()
       console.log('每周定时任务执行完毕', Date.now())
@@ -155,7 +154,7 @@ function scheduleTime() {
   var rule = new schedule.RecurrenceRule()
   rule.hour = 24
   rule.minute = 00
-  schedule.scheduleJob(rule, function() {
+  schedule.scheduleJob(rule, function () {
     reset_day()
     console.log('每天定时任务执行完毕', Date.now())
   })
@@ -163,7 +162,7 @@ function scheduleTime() {
 scheduleTime()
 // 获取token
 function InitToken() {
-  getToken().then(function(res1) {
+  getToken().then(function (res1) {
     access_token.token = res1.data.access_token
     access_token.timer = Date.now()
     console.log(access_token)

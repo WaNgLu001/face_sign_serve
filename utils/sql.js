@@ -53,16 +53,15 @@ const reset_week = async () => {
     // 先将所有数据查询出来，然后保存到另一张表中
     // 需要将当前周数+1
     const data = await sqlFun(`SELECT WEEK FROM sign_week LIMIT 1`)
-    const week = data[0].WEEK + 1
+    const week = parseInt(data[0].WEEK) + 1
     sqlFun(`UPDATE sign_week SET signIn = '-1', mon = 0 , tues = 0 , wed = 0 , thur = 0 , fri = 0 , sat = 0 , sun = 0, WEEK ='${week}' `)
     sendEmail('周')
 }
 
 // 每天更新数据库
-
 const reset_day = async () => {
     //  已签到，未签退，当日时长自动为1，并且将签到时间重置为-1
-    const weekArr = [ 'sun','mon', 'tues', 'wed', 'thur', 'fri', 'sat']
+    const weekArr = ['sun', 'mon', 'tues', 'wed', 'thur', 'fri', 'sat']
     let week = weekArr[new Date().getDay()]
     const data = await sqlFun(`SELECT * FROM sign_week`)
     console.log(new Date().getDay())
@@ -77,10 +76,18 @@ const reset_day = async () => {
     });
     sendEmail('日')
 }
-reset_day()
 // 根据周数查询当日已签到时长
 const getSignTime = async (week, uid) => {
     return sqlFun(`SELECT ${week} FROM sign_week WHERE uid = '${uid}'`)
+}
+
+// 将数据上传至数据库
+const setFaceInfo = async (face_info) => {
+    const data = await sqlFun(`SELECT WEEK FROM sign_week LIMIT 1`)
+    let week = data[0].WEEK
+    face_info.forEach(async el => {
+        sqlFun(`INSERT INTO sign_week (uid,NAME,WEEK,class) VALUES ('${el[1]}','${el[0]}','${week}','${el[2]}')`)
+    })
 }
 module.exports = {
     test,
@@ -91,6 +98,7 @@ module.exports = {
     sqlFun,
     reset_week,
     reset_day,
-    getSignTime
+    getSignTime,
+    setFaceInfo
 }
 // 
