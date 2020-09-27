@@ -12,7 +12,8 @@ const {
   reset_week,
   reset_day,
   getSignTime,
-  setFaceInfo
+  setFaceInfo,
+  getClassInfo
 } = require('../utils/sql')
 let access_token = {
   token: '',
@@ -24,7 +25,7 @@ async function test() {
   let FaceInfo = sheets[0].data
   FaceInfo.shift()
   const count = await setFaceInfo(FaceInfo)
-  console.log(FaceInfo.length,count)
+  console.log(FaceInfo.length, count)
   return FaceInfo
 }
 // test()
@@ -55,6 +56,9 @@ async function faceSearch(imgBase) {
   return result
 }
 
+router.get('/', function (req, res) {
+  res.json({})
+})
 // 判断当前用户ip是否有效
 router.get('/get_ip', function (req, res, next) {
   res.status(200).json({
@@ -136,6 +140,16 @@ router.post('/search', async function (req, res) {
   }
 })
 
+// 查询每个教室
+router.get('/getClass', async function (req, res) {
+  const {
+    type
+  } = req.query
+  const data = await getClassInfo(type)
+  res.status(200).json({
+    data
+  })
+})
 // 定时任务
 function scheduleTime() {
   // 每周重置数据库

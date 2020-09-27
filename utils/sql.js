@@ -89,6 +89,12 @@ const setFaceInfo = async (face_info) => {
         sqlFun(`INSERT INTO sign_week (uid,NAME,WEEK,class) VALUES ('${el[1]}','${el[0]}','${week}','${el[2]}')`)
     })
 }
+
+// 查询每个教室
+const getClassInfo = (type) => {
+    console.log(type)
+    return sqlFun(`SELECT NAME,mon,tues,wed,thur,fri,sat,sun FROM sign_week WHERE class = '${type}'`)
+}
 module.exports = {
     test,
     signIn,
@@ -99,6 +105,8 @@ module.exports = {
     reset_week,
     reset_day,
     getSignTime,
-    setFaceInfo
+    setFaceInfo,
+    getClassInfo
+
 }
 // 
