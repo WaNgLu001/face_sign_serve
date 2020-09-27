@@ -51,6 +51,10 @@ const savaSignTime = (sign_time_long, day, uid) => {
 // 每周重置数据库
 const reset_week = async () => {
     // 先将所有数据查询出来，然后保存到另一张表中
+    const data1 = await sqlFun(`SELECT * FROM sign_week`)
+    data1.forEach(el => {
+        sqlFun(`INSERT INTO total_count (uid,username,WEEK,class,mon,tues,wed,thur,fri,sat,sun) VALUES ('${el.uid}','${el.name}','${el.week}','${el.class}','${el.mon}','${el.tues}','${el.wed}','${el.thur}','${el.fri}','${el.sat}','${el.sun}')`)
+    })
     // 需要将当前周数+1
     const data = await sqlFun(`SELECT WEEK FROM sign_week LIMIT 1`)
     const week = parseInt(data[0].WEEK) + 1

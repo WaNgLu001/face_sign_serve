@@ -24,8 +24,7 @@ async function test() {
   var sheets = xlsx.parse(`${__dirname}\\test.xlsx`)
   let FaceInfo = sheets[0].data
   FaceInfo.shift()
-  const count = await setFaceInfo(FaceInfo)
-  console.log(FaceInfo.length, count)
+  setFaceInfo(FaceInfo)
   return FaceInfo
 }
 // test()
