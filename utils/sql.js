@@ -59,11 +59,13 @@ const reset_week = async () => {
 }
 
 // 每天更新数据库
+
 const reset_day = async () => {
     //  已签到，未签退，当日时长自动为1，并且将签到时间重置为-1
-    const weekArr = ['mon', 'tues', 'wed', 'thur', 'fri', 'sat', 'sun']
-    let week = weekArr[new Date().getDay() - 1]
+    const weekArr = [ 'sun','mon', 'tues', 'wed', 'thur', 'fri', 'sat']
+    let week = weekArr[new Date().getDay()]
     const data = await sqlFun(`SELECT * FROM sign_week`)
+    console.log(new Date().getDay())
     data.forEach(element => {
         const {
             signIn,
@@ -75,6 +77,7 @@ const reset_day = async () => {
     });
     sendEmail('日')
 }
+reset_day()
 // 根据周数查询当日已签到时长
 const getSignTime = async (week, uid) => {
     return sqlFun(`SELECT ${week} FROM sign_week WHERE uid = '${uid}'`)

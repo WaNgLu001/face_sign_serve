@@ -137,8 +137,8 @@ function scheduleTime() {
   });
   // 每天检测数据库
   var rule = new schedule.RecurrenceRule();
-  rule.hour = 24
-  rule.minute = 00
+  rule.hour = 10
+  rule.minute = 05
   schedule.scheduleJob(rule, function () {
     reset_day()
     console.log('每天定时任务执行完毕', Date.now())
