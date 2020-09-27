@@ -129,7 +129,7 @@ router.post('/search', async function (req, res) {
     const data4 = await savaSignTime(sign_time_long, week, uid)
     if (data4)
       return res.status(200).json({
-        status: 0,
+        status: '0',
         msg: `${name}同学,签退成功,今日签到${sign_time_long} h`
       })
     console.log(data4)
