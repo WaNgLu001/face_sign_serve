@@ -161,8 +161,8 @@ router.get('/getClass', async function (req, res) {
 function scheduleTime() {
   // 每周重置数据库
   schedule.scheduleJob({
-      hour: 24,
-      minute: 00,
+      hour: 23,
+      minute: 50,
       dayOfWeek: '7'
     },
     function () {
@@ -173,8 +173,8 @@ function scheduleTime() {
   )
   // 每天检测数据库
   var rule = new schedule.RecurrenceRule()
-  rule.hour = 24
-  rule.minute = 00
+  rule.hour = 23
+  rule.minute = 50
   schedule.scheduleJob(rule, function () {
     reset_day()
     console.log('每天定时任务执行完毕', Date.now())
