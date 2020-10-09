@@ -24,7 +24,8 @@ async function test() {
   var sheets = xlsx.parse(`${__dirname}\\test.xlsx`)
   let FaceInfo = sheets[0].data
   FaceInfo.shift()
-  setFaceInfo(FaceInfo)
+  const count = await setFaceInfo(FaceInfo)
+  console.log(FaceInfo.length, count)
   return FaceInfo
 }
 // test()
@@ -63,7 +64,7 @@ router.get('/get_ip', function (req, res, next) {
   res.status(200).json({
     ip: req.ip.split(':')[3] === '59.48.111.138'
   })
-})
+})  
 
 // 人脸搜索
 router.post('/search', async function (req, res) {
@@ -75,13 +76,17 @@ router.post('/search', async function (req, res) {
   const {
     data
   } = await faceSearch(imgBase)
-  if (!data.resule) {
+  console.log(!data.result)
+    if (!data.result) {
     res.status(200).json({
       status: '5',
-      msg: '人脸库匹配失败,请将照片上传至人脸库中重试！'
+      msg: '未在人脸库中匹配到人脸,请将照片上传至人脸库中重试！'
     })
     return
   }
+   console.log(data.result.user_list[0],data.result.user_list[0].score)
+
+ 
   if (data.result.user_list[0].score - 70 < 0) {
     res.status(200).json({
       status: 3,
@@ -104,6 +109,7 @@ router.post('/search', async function (req, res) {
   // 根据uid查询用户姓名
   const data2 = await findUserName(uid)
   const name = data2[0].NAME
+  console.log(name)
   // 签到
   if (type === '1') {
     // 如果重复签到直接返回
@@ -161,9 +167,9 @@ function scheduleTime() {
   // 每周重置数据库
   schedule.scheduleJob({
       hour: 23,
-      minute: 50,
-      dayOfWeek: '7'
-    },
+      minute: 48,
+      dayOfWeek: '0'
+    }, 
     function () {
       reset_week()
       InitToken()
