@@ -16,19 +16,72 @@ const {
   getClassInfo,
   findAllUser,
   findAllUserTimer,
+  setWeek,
+  getweek,
+  deleteUser,
 } = require("../utils/sql");
+const multer = require("multer");
+var fs = require("fs");
+var upload = multer({ dest: "uploads/" });
+const {
+  QRfindAllUser,
+  QRsetFaceInfo,
+  QRdeleteUser,
+  QRsetWeek,
+} = require("../utils/qrcode");
 let access_token = {
   token: "",
   timer: "",
 };
-// 读取xlsx文件中的信息
-async function test() {
-  var sheets = xlsx.parse(`${__dirname}\\test.xlsx`);
+
+/**
+ * 批量上传人脸文件命名为 ： face_sign_user
+ * 批量上传扫码文件命名为 ： qrcode_sign_user
+ */
+router.post("/profile", upload.any(), function (req, res) {
+  console.log(req.files[0].originalname);
+  if (
+    req.files[0].originalname === "face_sign_user.xls" ||
+    req.files[0].originalname === "face_sign_user.xlsx" ||
+    req.files[0].originalname === "qrcode_sign_user.xlsx" ||
+    req.files[0].originalname === "qrcode_sign_user.xls"
+  ) {
+    var des_file = "./routes/uploads/" + req.files[0].originalname;
+    fs.readFile(req.files[0].path, function (err, data) {
+      fs.writeFile(des_file, data, function (err) {
+        if (err) {
+          res.status(200).json({ status: 1, msg: "文件上传失败" });
+        } else {
+          const name = req.files[0].originalname.split(".")[0];
+          if (name === "face_sign_user") {
+            BatchUpload();
+          } else {
+            QRBatchUpload();
+          }
+          res.status(200).json({ status: 0, msg: "文件上传成功" });
+        }
+      });
+    });
+  } else {
+    res.status(200).json({ status: 1, msg: "文件上传失败,请按照要求正确上传" });
+  }
+});
+
+// 读取xlsx文件中的信息 -- 扫码
+async function QRBatchUpload() {
+  var sheets = xlsx.parse(`${__dirname}\\uploads/qrcode_sign_user.xlsx`);
   let FaceInfo = sheets[0].data;
   FaceInfo.shift();
-  const count = await setFaceInfo(FaceInfo);
-  console.log(FaceInfo.length, count);
-  return FaceInfo;
+  QRsetFaceInfo(FaceInfo);
+}
+
+// 读取xlsx文件中的信息 --- 人脸
+async function BatchUpload() {
+  console.log(1);
+  var sheets = xlsx.parse(`${__dirname}\\uploads/face_sign_user.xlsx`);
+  let FaceInfo = sheets[0].data;
+  FaceInfo.shift();
+  setFaceInfo(FaceInfo);
 }
 // test()
 // 获取access_token 的函数
@@ -157,24 +210,77 @@ router.get("/getClass", async function (req, res) {
   });
 });
 
-// 查询人脸签到的所有用户
+/**
+ * 以下接口为人脸签到和扫码签到公用接口
+ * type为1表示人脸签到 ，type为2 表示扫码签到
+ */
+
+// 查询签到的所有用户
 router.get("/getAllUser", async function (req, res) {
-  const data = await findAllUser();
+  const { type } = req.query;
+  let data;
+  if (type === "1") {
+    data = await findAllUser();
+  } else {
+    data = await QRfindAllUser();
+  }
   res.status(200).json({
     data,
   });
 });
 
 // 增加单个用户
+router.post("/addOneUser", function (req, res) {
+  const { type } = req.body;
+  const { uid, name, classname } = req.body;
+  const arr = [name, uid, classname];
+  if (type === "1") {
+    setFaceInfo([arr]);
+  } else {
+    QRsetFaceInfo([arr]);
+  }
+  res.status(200).json({ status: 0, msg: "用户添加成功" });
+});
 // 根据uid删除用户
+router.get("/deleteUser", function (req, res) {
+  const { uids, type } = req.query;
+  if (type === "1") {
+    console.log(uids, type);
+    deleteUser(uids);
+  } else {
+    QRdeleteUser(uids);
+  }
+  res.status(200).json({ status: 0, msg: "删除成功" });
+});
 // 根据上传的xls文件批量添加用户
 // 修改当前周数
+router.get("/setWeek", async function (req, res) {
+  const { week, type } = req.query;
+  let data;
+  if (type === "1") {
+    data = await setWeek(week);
+  } else {
+    data = await QRsetWeek(week);
+  }
+  if (data.affectedRows !== 0) {
+    res.status(200).json({ status: 0, msg: "修改成功" });
+  } else {
+    res.status(200).json({ status: 1, msg: "修改失败" });
+  }
+});
 // 查询所有用户的所有签到时长
 router.get("/getAllUserTimer", async function (req, res) {
+  const { type } = req.query;
+  console.log(type);
   const data = await findAllUserTimer();
   res.status(200).json({
     data,
   });
+});
+// 查看当前周
+router.get("/getWeek", async function (req, res) {
+  const data = await getweek();
+  res.status(200).json({ status: 0, week: data[0].WEEK });
 });
 // 定时任务
 function scheduleTime() {

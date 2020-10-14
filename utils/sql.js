@@ -97,11 +97,14 @@ const getSignTime = async (week, uid) => {
 const setFaceInfo = async (face_info) => {
   const data = await sqlFun(`SELECT WEEK FROM sign_week LIMIT 1`);
   let week = data[0].WEEK;
+  let count = 0;
   face_info.forEach(async (el) => {
+    count++;
     sqlFun(
       `INSERT INTO sign_week (uid,NAME,WEEK,class) VALUES ('${el[1]}','${el[0]}','${week}','${el[2]}')`
     );
   });
+  return count;
 };
 
 // 查询每个教室
@@ -114,14 +117,28 @@ const getClassInfo = (type) => {
 
 // 查询人脸签到用户
 const findAllUser = () => {
-    return sqlFun(`SELECT * FROM sign_week WHERE class !='admin'`)
-}
+  return sqlFun(`SELECT * FROM sign_week WHERE class !='admin'`);
+};
 // 查询所有用户的签到时长
-const findAllUserTimer = () =>{
-  return sqlFun(`SELECT * FROM total_count WHERE class !='admin'`)
-}
-
+const findAllUserTimer = () => {
+  return sqlFun(`SELECT * FROM total_count WHERE class !='admin'`);
+};
+// 修改当前周
+const setWeek = (week) => {
+  return sqlFun(`UPDATE sign_week SET WEEK = '${week}' `);
+};
+// 查看当前周
+const getweek = () => {
+  return sqlFun(`SELECT WEEK FROM sign_week LIMIT 1`);
+};
+// 根据uid删除一个或多个用户
+const deleteUser = (uids) => {
+  console.log(uids);
+  sqlFun(`DELETE FROM sign_week WHERE uid IN (${uids})`);
+  sqlFun(`DELETE FROM total_count WHERE uid IN (${uids})`);
+};
 module.exports = {
+  getweek,
   test,
   signIn,
   findUserName,
@@ -134,6 +151,8 @@ module.exports = {
   setFaceInfo,
   getClassInfo,
   findAllUser,
-  findAllUserTimer
+  findAllUserTimer,
+  setWeek,
+  deleteUser,
 };
 //
