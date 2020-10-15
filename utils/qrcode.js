@@ -58,7 +58,81 @@ const QRsetFaceInfo = async (face_info) => {
     );
   });
 };
+// 根据查询用户签到时长
+const QRfindSignTime = (uid) => {
+  return sqlFun(`SELECT signIn FROM sign_week WHERE uid = '${uid}'`);
+};
+// 根据周数查询当日已签到时长
+const QRgetSignTime = async (week, uid) => {
+  return sqlFun(`SELECT ${week} FROM sign_week WHERE uid = '${uid}'`);
+};
+// 根据签到时长和当前日期保存到数据库
+const QRsavaSignTime = (sign_time_long, day, uid) => {
+  // 签到时长修改到数据库，并将签到时间重置
+  return new Promise(function (reslove, reject) {
+    sqlFun(
+      `UPDATE sign_week SET ${day} = "${sign_time_long}" WHERE uid="${uid}";`
+    ).then(function (res) {
+      sqlFun(`UPDATE sign_week SET signIn = '-1' WHERE uid = '${uid}'`).then(
+        function (data) {
+          reslove(data);
+        },
+        function (error) {
+          reject(error);
+        }
+      );
+    });
+  });
+  // 重置签到时间
+};
 
+// 获取所有的uid
+const QRgetAllUid_mac = () => {
+  return sqlFun(`SELECT uid,mac FROM sign_week WHERE class !='admin'`);
+};
+
+// 新增用户
+const QRaddUser = async (uid, classname, name, mac) => {
+  const data = await sqlFun(`SELECT WEEK FROM sign_week LIMIT 1`);
+  let week = data[0].WEEK;
+  return sqlFun(
+    `INSERT INTO sign_week (uid,NAME,WEEK,class,mac) VALUES ('${uid}','${name}','${week}','${classname}','${mac}')`
+  );
+};
+
+// 每天重置数据库
+// 每天更新数据库
+const QRreset_day = async () => {
+  //  已签到，未签退，当日时长自动为1，并且将签到时间重置为-1
+  const weekArr = ["sun", "mon", "tues", "wed", "thur", "fri", "sat"];
+  let week = weekArr[new Date().getDay()];
+  const data = await sqlFun(`SELECT * FROM sign_week`);
+  data.forEach((element) => {
+    const { signIn, uid } = element;
+    if (signIn !== "-1") {
+      sqlFun(
+        `UPDATE sign_week SET signIn='-1',${week}='1' WHERE uid = '${uid}'`
+      );
+    }
+  });
+};
+
+// 每周重置数据库
+const QRreset_week = async () => {
+  // 先将所有数据查询出来，然后保存到另一张表中
+  const data1 = await sqlFun(`SELECT * FROM sign_week`);
+  data1.forEach((el) => {
+    sqlFun(
+      `INSERT INTO total_count (uid,username,WEEK,class,mon,tues,wed,thur,fri,sat,sun) VALUES ('${el.uid}','${el.name}','${el.week}','${el.class}','${el.mon}','${el.tues}','${el.wed}','${el.thur}','${el.fri}','${el.sat}','${el.sun}')`
+    );
+  });
+  // 需要将当前周数+1
+  const data = await sqlFun(`SELECT WEEK FROM sign_week LIMIT 1`);
+  const week = parseInt(data[0].WEEK) + 1;
+  sqlFun(
+    `UPDATE sign_week SET signIn = '-1', mon = 0 , tues = 0 , wed = 0 , thur = 0 , fri = 0 , sat = 0 , sun = 0, WEEK ='${week}' `
+  );
+};
 module.exports = {
   QRgetweek,
   QRfindUserName,
@@ -67,4 +141,12 @@ module.exports = {
   QRsetWeek,
   QRdeleteUser,
   QRsetFaceInfo,
+  QRfindSignTime,
+  QRsignIn,
+  QRgetSignTime,
+  QRsavaSignTime,
+  QRgetAllUid_mac,
+  QRaddUser,
+  QRreset_day,
+  QRreset_week,
 };

@@ -28,6 +28,9 @@ const {
   QRsetFaceInfo,
   QRdeleteUser,
   QRsetWeek,
+  QRreset_day,
+  QRreset_week,
+  QRgetweek,
 } = require("../utils/qrcode");
 let access_token = {
   token: "",
@@ -134,8 +137,6 @@ router.post("/search", async function (req, res) {
     });
     return;
   }
-  console.log(data.result.user_list[0], data.result.user_list[0].score);
-
   if (data.result.user_list[0].score - 70 < 0) {
     res.status(200).json({
       status: 3,
@@ -158,7 +159,6 @@ router.post("/search", async function (req, res) {
   // 根据uid查询用户姓名
   const data2 = await findUserName(uid);
   const name = data2[0].NAME;
-  console.log(name);
   // 签到
   if (type === "1") {
     // 如果重复签到直接返回
@@ -245,8 +245,7 @@ router.post("/addOneUser", function (req, res) {
 router.get("/deleteUser", function (req, res) {
   const { uids, type } = req.query;
   if (type === "1") {
-    console.log(uids, type);
-    deleteUser(uids);
+    // deleteUser(uids);
   } else {
     QRdeleteUser(uids);
   }
@@ -256,6 +255,7 @@ router.get("/deleteUser", function (req, res) {
 // 修改当前周数
 router.get("/setWeek", async function (req, res) {
   const { week, type } = req.query;
+  console.log(type);
   let data;
   if (type === "1") {
     data = await setWeek(week);
@@ -279,7 +279,14 @@ router.get("/getAllUserTimer", async function (req, res) {
 });
 // 查看当前周
 router.get("/getWeek", async function (req, res) {
-  const data = await getweek();
+  const { type } = req.query;
+  console.log(type + "a");
+  let data;
+  if (type === "1") {
+    data = await getweek();
+  } else {
+    data = await QRgetweek();
+  }
   res.status(200).json({ status: 0, week: data[0].WEEK });
 });
 // 定时任务
@@ -293,6 +300,7 @@ function scheduleTime() {
     },
     function () {
       reset_week();
+      QRreset_week();
       InitToken();
       console.log("每周定时任务执行完毕", Date.now());
     }
@@ -303,7 +311,7 @@ function scheduleTime() {
   rule.minute = 50;
   schedule.scheduleJob(rule, function () {
     reset_day();
-    console.log("每天定时任务执行完毕", Date.now());
+    QRreset_day();
   });
 }
 scheduleTime();
