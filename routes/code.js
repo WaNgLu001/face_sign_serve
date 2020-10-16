@@ -7,17 +7,16 @@ const {
   QRsavaSignTime,
   QRgetAllUid_mac,
   QRaddUser,
+  QRremoveMac,
 } = require("../utils/qrcode");
 
 // 根据uid进行签到  学号
 /**
  *  首先判断用户是否已经签到，如已经签到提示不能重复签到
- *
  */
 router.get("/QRSign", async function (req, res) {
   const { uid } = req.query;
   const data = await QRfindSignTime(uid);
-  console.log(uid,data);
   if (data.length === 0) {
     res.status(200).json({ status: 3, msg: "学号不存在" });
     return;
@@ -42,7 +41,7 @@ router.get("/QRSignOut", async function (req, res) {
   }
   if (data[0].signIn === "-1") {
     res.status(200).json({
-      status: "3",
+      status: 4,
       msg: `同学,请先签到`,
     });
     return;
@@ -92,4 +91,17 @@ router.post("/addQRuser", async function (req, res) {
     }
   }
 });
+// 解绑设备
+router.get("/removeMac", async function (req, res) {
+  const { uid } = req.query;
+  console.log(uid);
+  const data = await QRremoveMac(uid);
+  if (data.affectedRows !== "0") {
+    res.status(200).json({ status: 0, msg: "设备解绑成功" });
+    return;
+  } else {
+    res.status(200).json({ status: 1, msg: "服务端出错,请重试！" });
+  }
+});
+
 module.exports = router;

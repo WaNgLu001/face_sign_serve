@@ -31,6 +31,7 @@ const {
   QRreset_day,
   QRreset_week,
   QRgetweek,
+  QRfindAllUserTimer
 } = require("../utils/qrcode");
 let access_token = {
   token: "",
@@ -42,7 +43,6 @@ let access_token = {
  * 批量上传扫码文件命名为 ： qrcode_sign_user
  */
 router.post("/profile", upload.any(), function (req, res) {
-  console.log(req.files[0].originalname);
   if (
     req.files[0].originalname === "face_sign_user.xls" ||
     req.files[0].originalname === "face_sign_user.xlsx" ||
@@ -80,7 +80,6 @@ async function QRBatchUpload() {
 
 // 读取xlsx文件中的信息 --- 人脸
 async function BatchUpload() {
-  console.log(1);
   var sheets = xlsx.parse(`${__dirname}\\uploads/face_sign_user.xlsx`);
   let FaceInfo = sheets[0].data;
   FaceInfo.shift();
@@ -129,7 +128,6 @@ router.post("/search", async function (req, res) {
   let { type, imgBase } = req.body; // 1 签到 2签退
   imgBase = imgBase.split(",")[1];
   const { data } = await faceSearch(imgBase);
-  console.log(!data.result);
   if (!data.result) {
     res.status(200).json({
       status: "5",
@@ -189,7 +187,6 @@ router.post("/search", async function (req, res) {
     let longtime = await getSignTime(week, uid);
     longtime = parseFloat(longtime[0][week]);
     sign_time_long = parseFloat(sign_time_long);
-    console.log(sign_time_long, longtime);
     sign_time_long = (longtime + sign_time_long).toFixed(2);
     const data4 = await savaSignTime(sign_time_long, week, uid);
     if (data4)
@@ -197,7 +194,6 @@ router.post("/search", async function (req, res) {
         status: "0",
         msg: `${name}同学,签退成功,今日签到${sign_time_long} h`,
       });
-    console.log(data4);
   }
 });
 
@@ -245,7 +241,7 @@ router.post("/addOneUser", function (req, res) {
 router.get("/deleteUser", function (req, res) {
   const { uids, type } = req.query;
   if (type === "1") {
-    // deleteUser(uids);
+    deleteUser(uids);
   } else {
     QRdeleteUser(uids);
   }
@@ -255,7 +251,7 @@ router.get("/deleteUser", function (req, res) {
 // 修改当前周数
 router.get("/setWeek", async function (req, res) {
   const { week, type } = req.query;
-  console.log(type);
+  console.log(type, type === "1");
   let data;
   if (type === "1") {
     data = await setWeek(week);
@@ -271,8 +267,12 @@ router.get("/setWeek", async function (req, res) {
 // 查询所有用户的所有签到时长
 router.get("/getAllUserTimer", async function (req, res) {
   const { type } = req.query;
-  console.log(type);
-  const data = await findAllUserTimer();
+  let data;
+  if (type === "1") {
+    data = await findAllUserTimer();
+  }else{
+    data = await QRfindAllUserTimer();
+  }
   res.status(200).json({
     data,
   });
@@ -280,7 +280,6 @@ router.get("/getAllUserTimer", async function (req, res) {
 // 查看当前周
 router.get("/getWeek", async function (req, res) {
   const { type } = req.query;
-  console.log(type + "a");
   let data;
   if (type === "1") {
     data = await getweek();
@@ -302,7 +301,6 @@ function scheduleTime() {
       reset_week();
       QRreset_week();
       InitToken();
-      console.log("每周定时任务执行完毕", Date.now());
     }
   );
   // 每天检测数据库
@@ -320,7 +318,6 @@ function InitToken() {
   getToken().then(function (res1) {
     access_token.token = res1.data.access_token;
     access_token.timer = Date.now();
-    console.log(access_token);
   });
 }
 InitToken();

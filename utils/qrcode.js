@@ -133,8 +133,16 @@ const QRreset_week = async () => {
     `UPDATE sign_week SET signIn = '-1', mon = 0 , tues = 0 , wed = 0 , thur = 0 , fri = 0 , sat = 0 , sun = 0, WEEK ='${week}' `
   );
 };
+
+// 解绑设备,将mac置为-1
+const QRremoveMac = async (uid) => {
+  return sqlFun(
+    `UPDATE sign_week SET mac = '暂无绑定设备' WHERE uid = '${uid}'`
+  );
+};
 module.exports = {
   QRgetweek,
+  QRremoveMac,
   QRfindUserName,
   QRfindAllUser,
   QRfindAllUserTimer,

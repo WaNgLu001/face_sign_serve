@@ -19,9 +19,6 @@ app.all("*", function (req, res, next) {
   res.header("Access-Control-Max-Age", 1728000); //预请求缓存20天
   next();
 });
-// view engine setup
-app.set("views", path.join(__dirname, "views"));
-app.set("view engine", "ejs");
 
 app.use(logger("dev"));
 app.use(express.json());
