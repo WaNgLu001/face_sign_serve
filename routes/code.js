@@ -8,6 +8,8 @@ const {
   QRgetAllUid_mac,
   QRaddUser,
   QRremoveMac,
+  getMac,
+  resetMac,
 } = require("../utils/qrcode");
 
 // 根据uid进行签到  学号
@@ -62,31 +64,58 @@ router.get("/QRSignOut", async function (req, res) {
 });
 
 // 用户自行注册
+/**
+ * type为1表示为用户自行注册
+ * 需要判断学号是否注册，如果没有注册直接注册成功
+ * 如果用户注册，判断学号与mac地址是否一致，如果mac地址为默认值则，表示用户要跟换设备。
+ * 需判断此设备是否注册其他学号
+ */
 router.post("/addQRuser", async function (req, res) {
-  const { uid, classname, name, mac } = req.body;
+  const { uid, classname, name, mac, type } = req.body;
   const uids = await QRgetAllUid_mac();
-  let flag = 0;
-  // 判断用户信息唯一性
-  uids.some((element) => {
-    if (element.uid === uid) {
-      flag = 1;
-      res.status(200).json({
-        status: 1,
-        msg: "此学号已经注册,不可重复注册，如有问题请联系管理员",
-      });
-      return true;
-    } else if (element.mac === mac) {
-      flag = 1;
-      res.status(200).json({
-        status: 1,
-        msg: "此设备已经注册,不可重复注册，如有问题请联系管理员",
-      });
-      return true;
+  if (type === "1") {
+    for (const element of uids) {
+      if (element.uid === uid) {
+        flag = 1;
+        if (element.mac === mac) {
+          res.status(200).json({
+            status: 0,
+            msg: "登录成功！",
+          });
+          return;
+        } else if (element.mac === "暂无绑定设备") {
+          // 用户绑定设备
+          // 先判断当前mac是否已经被注册
+          const data2 = await getMac(mac);
+          if (data2.length !== 0) {
+            res.status(200).json({ status: 3, msg: "此设备已绑定其他账号" });
+            return;
+          }
+          const data = await resetMac(mac, uid);
+          if (data.affectedRows !== 0) {
+            res.status(200).json({ status: 0, msg: "设备绑定成功" });
+            return;
+          }
+        } else {
+          res.status(200).json({ status: 1, mag: "请使用绑定的设备进行登录" });
+          return;
+        }
+      }
     }
-  });
-  if (flag === 0) {
+    // 执行到这里说名这个学号没有被绑定,判断此设备是否绑定其他账号
+    const data3 = await getMac(mac);
+    if (data3.length !== 0) {
+      res.status(200).json({ status: 3, msg: "此设备已绑定其他账号" });
+      return;
+    } else {
+      const data1 = await QRaddUser(uid, classname, name, mac);
+      if (data1.affectedRows === 1) {
+        res.status(200).json({ status: 0, msg: "注册成功！" });
+      }
+    }
+  } else {
     const data1 = await QRaddUser(uid, classname, name, mac);
-    if (data1.affectedRows !== "0") {
+    if (data1.affectedRows === 1) {
       res.status(200).json({ status: 0, msg: "注册成功！" });
     }
   }
@@ -94,7 +123,6 @@ router.post("/addQRuser", async function (req, res) {
 // 解绑设备
 router.get("/removeMac", async function (req, res) {
   const { uid } = req.query;
-  console.log(uid);
   const data = await QRremoveMac(uid);
   if (data.affectedRows !== "0") {
     res.status(200).json({ status: 0, msg: "设备解绑成功" });

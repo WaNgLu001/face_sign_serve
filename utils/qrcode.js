@@ -140,6 +140,16 @@ const QRremoveMac = async (uid) => {
     `UPDATE sign_week SET mac = '暂无绑定设备' WHERE uid = '${uid}'`
   );
 };
+
+// 根据学号重新绑定设备
+const resetMac = async (mac, uid) => {
+  return sqlFun(`UPDATE sign_week SET mac = '${mac}' WHERE uid = '${uid}'`);
+};
+
+// 判断此mac是否已经被注册
+const getMac = async (mac) => {
+  return sqlFun(`SELECT * FROM sign_week WHERE mac = '${mac}'`);
+};
 module.exports = {
   QRgetweek,
   QRremoveMac,
@@ -157,4 +167,6 @@ module.exports = {
   QRaddUser,
   QRreset_day,
   QRreset_week,
+  resetMac,
+  getMac
 };
