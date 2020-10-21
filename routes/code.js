@@ -10,6 +10,7 @@ const {
   QRremoveMac,
   getMac,
   resetMac,
+  QRgetClassInfo,
 } = require("../utils/qrcode");
 
 // 根据uid进行签到  学号
@@ -59,7 +60,7 @@ router.get("/QRSignOut", async function (req, res) {
   if (data4.affectedRows !== "0") {
     res
       .status(200)
-      .json({ status: 0, msg: `签退成功,今日累计签到时长${sign_time_long}` });
+      .json({ status: 0, msg: `今日累计签到时长${sign_time_long}` });
   }
 });
 
@@ -77,6 +78,14 @@ router.post("/addQRuser", async function (req, res) {
     for (const element of uids) {
       if (element.uid === uid) {
         flag = 1;
+        console.log(element.class !== classname || element.name !== name);
+        if (element.class !== classname || element.name !== name) {
+          res.status(200).json({
+            status: 2,
+            msg: "当前学号姓名班级与注册时信息不一致！",
+          });
+          return;
+        }
         if (element.mac === mac) {
           res.status(200).json({
             status: 0,
@@ -97,7 +106,7 @@ router.post("/addQRuser", async function (req, res) {
             return;
           }
         } else {
-          res.status(200).json({ status: 1, mag: "请使用绑定的设备进行登录" });
+          res.status(200).json({ status: 1, msg: "请使用绑定的设备进行登录" });
           return;
         }
       }
@@ -132,4 +141,9 @@ router.get("/removeMac", async function (req, res) {
   }
 });
 
+// app查看当前周
+router.get('/getQRClass',async function(req,res){
+  const data = await QRgetClassInfo()
+  res.status(200).json({data});
+})
 module.exports = router;

@@ -88,7 +88,9 @@ const QRsavaSignTime = (sign_time_long, day, uid) => {
 
 // 获取所有的uid
 const QRgetAllUid_mac = () => {
-  return sqlFun(`SELECT uid,mac FROM sign_week WHERE class !='admin'`);
+  return sqlFun(
+    `SELECT uid,mac,class,name FROM sign_week WHERE class !='admin'`
+  );
 };
 
 // 新增用户
@@ -150,6 +152,13 @@ const resetMac = async (mac, uid) => {
 const getMac = async (mac) => {
   return sqlFun(`SELECT * FROM sign_week WHERE mac = '${mac}'`);
 };
+
+// 查询每个教室
+const QRgetClassInfo = () => {
+  return sqlFun(
+    `SELECT NAME,mon,tues,wed,thur,fri,sat,sun FROM sign_week WHERE class !='admin'`
+  );
+};
 module.exports = {
   QRgetweek,
   QRremoveMac,
@@ -168,5 +177,6 @@ module.exports = {
   QRreset_day,
   QRreset_week,
   resetMac,
-  getMac
+  getMac,
+  QRgetClassInfo
 };

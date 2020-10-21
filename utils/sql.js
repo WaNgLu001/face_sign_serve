@@ -109,7 +109,6 @@ const setFaceInfo = async (face_info) => {
 
 // 查询每个教室
 const getClassInfo = (type) => {
-  console.log(type);
   return sqlFun(
     `SELECT NAME,mon,tues,wed,thur,fri,sat,sun FROM sign_week WHERE class = '${type}'`
   );
