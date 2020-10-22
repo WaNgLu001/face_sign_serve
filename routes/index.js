@@ -31,7 +31,7 @@ const {
   QRreset_day,
   QRreset_week,
   QRgetweek,
-  QRfindAllUserTimer
+  QRfindAllUserTimer,
 } = require("../utils/qrcode");
 let access_token = {
   token: "",
@@ -270,7 +270,7 @@ router.get("/getAllUserTimer", async function (req, res) {
   let data;
   if (type === "1") {
     data = await findAllUserTimer();
-  }else{
+  } else {
     data = await QRfindAllUserTimer();
   }
   res.status(200).json({
@@ -287,6 +287,12 @@ router.get("/getWeek", async function (req, res) {
     data = await QRgetweek();
   }
   res.status(200).json({ status: 0, week: data[0].WEEK });
+});
+
+// app查看当前周
+router.get("/getfaceClass", async function (req, res) {
+  const data = await getClassInfo();
+  res.status(200).json({ data });
 });
 // 定时任务
 function scheduleTime() {

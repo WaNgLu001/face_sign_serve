@@ -107,13 +107,6 @@ const setFaceInfo = async (face_info) => {
   return count;
 };
 
-// 查询每个教室
-const getClassInfo = (type) => {
-  return sqlFun(
-    `SELECT NAME,mon,tues,wed,thur,fri,sat,sun FROM sign_week WHERE class = '${type}'`
-  );
-};
-
 // 查询人脸签到用户
 const findAllUser = () => {
   return sqlFun(`SELECT * FROM sign_week WHERE class !='admin'`);
@@ -135,6 +128,15 @@ const deleteUser = (uids) => {
   console.log(uids);
   sqlFun(`DELETE FROM sign_week WHERE uid IN (${uids})`);
   sqlFun(`DELETE FROM total_count WHERE uid IN (${uids})`);
+};
+
+
+
+// 查询每个教室
+const getClassInfo = () => {
+  return sqlFun(
+    `SELECT class,NAME,mon,tues,wed,thur,fri,sat,sun FROM sign_week WHERE class !='admin'`
+  );
 };
 module.exports = {
   getweek,
