@@ -156,7 +156,7 @@ const getMac = async (mac) => {
 // 查询每个教室
 const QRgetClassInfo = () => {
   return sqlFun(
-    `SELECT NAME,mon,tues,wed,thur,fri,sat,sun FROM sign_week WHERE class !='admin'`
+    `SELECT class,NAME,mon,tues,wed,thur,fri,sat,sun FROM sign_week WHERE class !='admin'`
   );
 };
 module.exports = {
