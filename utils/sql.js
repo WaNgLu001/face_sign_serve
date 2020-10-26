@@ -1,5 +1,5 @@
 const mysql = require("mysql"); // 连接数据库
-const sendEmail = require("./email");
+const {sendEmail} = require("./email");
 const conntection = mysql.createConnection({
   host: "119.3.254.20",
   user: "root",
@@ -77,7 +77,6 @@ const reset_day = async () => {
   const weekArr = ["sun", "mon", "tues", "wed", "thur", "fri", "sat"];
   let week = weekArr[new Date().getDay()];
   const data = await sqlFun(`SELECT * FROM sign_week`);
-  console.log(new Date().getDay());
   data.forEach((element) => {
     const { signIn, uid } = element;
     if (signIn !== "-1") {

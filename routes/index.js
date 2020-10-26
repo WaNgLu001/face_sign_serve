@@ -37,7 +37,6 @@ let access_token = {
   token: "",
   timer: "",
 };
-
 /**
  * 批量上传人脸文件命名为 ： face_sign_user
  * 批量上传扫码文件命名为 ： qrcode_sign_user
@@ -71,16 +70,16 @@ router.post("/profile", upload.any(), function (req, res) {
 });
 
 // 读取xlsx文件中的信息 -- 扫码
-async function QRBatchUpload() {
-  var sheets = xlsx.parse(`${__dirname}\\uploads/qrcode_sign_user.xlsx`);
+async function QRBatchUpload(file) {
+  var sheets = xlsx.parse(`${__dirname}\\uploads/face_sign_user.${file}`);
   let FaceInfo = sheets[0].data;
   FaceInfo.shift();
   QRsetFaceInfo(FaceInfo);
 }
 
 // 读取xlsx文件中的信息 --- 人脸
-async function BatchUpload() {
-  var sheets = xlsx.parse(`${__dirname}\\uploads/face_sign_user.xlsx`);
+async function BatchUpload(file) {
+  var sheets = xlsx.parse(`${__dirname}\\uploads/face_sign_user.${file}`);
   let FaceInfo = sheets[0].data;
   FaceInfo.shift();
   setFaceInfo(FaceInfo);
