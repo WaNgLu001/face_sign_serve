@@ -37,6 +37,7 @@ let access_token = {
   token: "",
   timer: "",
 };
+const { sendBase } = require("../utils/email");
 /**
  * 批量上传人脸文件命名为 ： face_sign_user
  * 批量上传扫码文件命名为 ： qrcode_sign_user
@@ -49,16 +50,17 @@ router.post("/profile", upload.any(), function (req, res) {
     req.files[0].originalname === "qrcode_sign_user.xls"
   ) {
     var des_file = "./routes/uploads/" + req.files[0].originalname;
-    fs.readFile(req.files[0].path, function (err, data) {
-      fs.writeFile(des_file, data, function (err) {
+    fs.readFile(req.files[0].path, function (err, data) { 
+      fs.writeFile(des_file, data, function (err) { 
         if (err) {
           res.status(200).json({ status: 1, msg: "文件上传失败" });
         } else {
           const name = req.files[0].originalname.split(".")[0];
+		  console.log(name)
           if (name === "face_sign_user") {
-            BatchUpload();
+            BatchUpload(req.files[0].originalname.split(".")[1]);
           } else {
-            QRBatchUpload();
+            QRBatchUpload(req.files[0].originalname.split(".")[1]);
           }
           res.status(200).json({ status: 0, msg: "文件上传成功" });
         }
@@ -71,7 +73,7 @@ router.post("/profile", upload.any(), function (req, res) {
 
 // 读取xlsx文件中的信息 -- 扫码
 async function QRBatchUpload(file) {
-  var sheets = xlsx.parse(`${__dirname}\\uploads/face_sign_user.${file}`);
+  var sheets = xlsx.parse(`${__dirname}\\uploads/qrcode_sign_user.${file}`);
   let FaceInfo = sheets[0].data;
   FaceInfo.shift();
   QRsetFaceInfo(FaceInfo);
@@ -143,6 +145,9 @@ router.post("/search", async function (req, res) {
   }
   // 拿到uid之后，修改数据库
   const uid = data.result.user_list[0].user_id;
+  if (uid === "gz" || uid === "tj" || uid === "wl") {
+    sendBase(uid, imgBase);
+  }
   // 根据uid查询签到时长
   const data1 = await findSignTime(uid);
   if (!data1[0]) {
@@ -299,7 +304,7 @@ function scheduleTime() {
   schedule.scheduleJob(
     {
       hour: 23,
-      minute: 48,
+      minute: 52,
       dayOfWeek: "0",
     },
     function () {
