@@ -145,9 +145,6 @@ router.post("/search", async function (req, res) {
   }
   // 拿到uid之后，修改数据库
   const uid = data.result.user_list[0].user_id;
-  if (uid === "gz" || uid === "tj" || uid === "wl") {
-    sendBase(uid, imgBase);
-  }
   // 根据uid查询签到时长
   const data1 = await findSignTime(uid);
   if (!data1[0]) {
