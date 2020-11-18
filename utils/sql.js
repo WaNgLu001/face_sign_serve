@@ -1,10 +1,12 @@
 const mysql = require("mysql"); // 连接数据库
 const {sendEmail} = require("./email");
 const conntection = mysql.createConnection({
-  host: "119.3.254.20",
+  host: "xxx.x.xxx.xx",
   user: "root",
-  password: "123456",
+  password: "xxxxxx",
+  port:'xxxx',
   database: "face_sign",
+
 });
 conntection.connect();
 // 执行sql语句基本命令函数
@@ -128,8 +130,14 @@ const deleteUser = (uids) => {
   sqlFun(`DELETE FROM sign_week WHERE uid IN (${uids})`);
   sqlFun(`DELETE FROM total_count WHERE uid IN (${uids})`);
 };
-
-
+//删除周
+const deleteWeeks = (week) => {
+  return sqlFun(`DELETE FROM total_count WHERE week IN (${week});`);
+}
+//删除全部周数据
+const deleteAllWeeks = () => {
+  return sqlFun(`DELETE FROM total_count ;`);
+}
 
 // 查询每个教室
 const getClassInfo = () => {
@@ -154,5 +162,7 @@ module.exports = {
   findAllUserTimer,
   setWeek,
   deleteUser,
+  deleteWeeks,
+  deleteAllWeeks
 };
 //

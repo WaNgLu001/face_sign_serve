@@ -19,6 +19,8 @@ const {
   setWeek,
   getweek,
   deleteUser,
+  deleteWeeks,
+  deleteAllWeeks,
 } = require("../utils/sql");
 const multer = require("multer");
 var fs = require("fs");
@@ -32,6 +34,8 @@ const {
   QRreset_week,
   QRgetweek,
   QRfindAllUserTimer,
+  QRdeleteWeeks,
+  QRdeleteAllWeeks
 } = require("../utils/qrcode");
 let access_token = {
   token: "",
@@ -86,7 +90,6 @@ async function BatchUpload(file) {
   FaceInfo.shift();
   setFaceInfo(FaceInfo);
 }
-// test()
 // 获取access_token 的函数
 async function getToken() {
   const param = qs.stringify({
@@ -248,6 +251,38 @@ router.get("/deleteUser", function (req, res) {
   }
   res.status(200).json({ status: 0, msg: "删除成功" });
 });
+//根据week删除周签到数据
+router.get("/deleteWeeks",async (req,res) => {
+  const {week,type} = req.query
+  let data;
+  if (type === "1") {//人脸
+    data = await deleteWeeks(week);
+  } else {
+     data = await QRdeleteWeeks(week);
+  }
+  if(data.affectedRows === 0){
+    res.status(200).json({ status: 1, msg: "删除失败" });
+  }else{
+    res.status(200).json({ status: 0, msg: "删除成功" });
+  }
+})
+
+router.get("/deleteAllWeeks",async (req,res) => {
+  const {type} = req.query
+  let data;
+  if (type === "1") {//人脸
+    data = await deleteAllWeeks();
+  } else {
+     data = await QRdeleteAllWeeks();
+  }
+  if(data.affectedRows === 0){
+    res.status(200).json({ status: 1, msg: "删除失败" });
+  }else{
+    res.status(200).json({ status: 0, msg: "删除成功" });
+  }
+})
+
+
 // 根据上传的xls文件批量添加用户
 // 修改当前周数
 router.get("/setWeek", async function (req, res) {
