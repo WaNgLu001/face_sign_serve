@@ -1,9 +1,9 @@
 const mysql = require("mysql"); // 连接数据库
 const conntection = mysql.createConnection({
-  host: "xxx.x.xxx.xx",
+  host: "119.3.254.20",
   user: "root",
-  password: "xxxxxx",
-  port:'xxxx',
+  password: "wl14221..",
+  port:'3406',
   database: "qrcode_sign",
 });
 // 执行sql语句基本命令函数

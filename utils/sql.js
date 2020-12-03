@@ -1,12 +1,11 @@
 const mysql = require("mysql"); // 连接数据库
-const {sendEmail} = require("./email");
+const { sendEmail } = require("./email");
 const conntection = mysql.createConnection({
-  host: "xxx.x.xxx.xx",
+  host: "119.3.254.20",
   user: "root",
-  password: "xxxxxx",
-  port:'xxxx',
+  port: "3406",
+  password: "wl14221..",
   database: "face_sign",
-
 });
 conntection.connect();
 // 执行sql语句基本命令函数
@@ -79,16 +78,24 @@ const reset_day = async () => {
   const weekArr = ["sun", "mon", "tues", "wed", "thur", "fri", "sat"];
   let week = weekArr[new Date().getDay()];
   const data = await sqlFun(`SELECT * FROM sign_week`);
-  data.forEach((element) => {
+  data.forEach(async (element) => {
     const { signIn, uid } = element;
     if (signIn !== "-1") {
+      const longTime = await sqlFun(
+        `SELECT ${week} FROM sign_week WHERE uid = '${uid}'`
+      );
+      let signTime = 1;
+      if (longTime[0][week] !== "0") {
+        signTime = parseInt(longTime[0][week]) + 1;
+      }
       sqlFun(
-        `UPDATE sign_week SET signIn='-1',${week}='1' WHERE uid = '${uid}'`
+        `UPDATE sign_week SET signIn='-1',${week}='${signTime}' WHERE uid = '${uid}'`
       );
     }
   });
   sendEmail("日");
 };
+reset_day();
 // 根据周数查询当日已签到时长
 const getSignTime = async (week, uid) => {
   return sqlFun(`SELECT ${week} FROM sign_week WHERE uid = '${uid}'`);
@@ -133,11 +140,11 @@ const deleteUser = (uids) => {
 //删除周
 const deleteWeeks = (week) => {
   return sqlFun(`DELETE FROM total_count WHERE week IN (${week});`);
-}
+};
 //删除全部周数据
 const deleteAllWeeks = () => {
   return sqlFun(`DELETE FROM total_count ;`);
-}
+};
 
 // 查询每个教室
 const getClassInfo = () => {
@@ -163,6 +170,6 @@ module.exports = {
   setWeek,
   deleteUser,
   deleteWeeks,
-  deleteAllWeeks
+  deleteAllWeeks,
 };
 //
