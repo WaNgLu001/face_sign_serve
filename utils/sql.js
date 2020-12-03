@@ -95,7 +95,6 @@ const reset_day = async () => {
   });
   sendEmail("日");
 };
-reset_day();
 // 根据周数查询当日已签到时长
 const getSignTime = async (week, uid) => {
   return sqlFun(`SELECT ${week} FROM sign_week WHERE uid = '${uid}'`);
