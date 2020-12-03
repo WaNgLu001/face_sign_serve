@@ -1,11 +1,11 @@
 const mysql = require("mysql"); // 连接数据库
 const { sendEmail } = require("./email");
 const conntection = mysql.createConnection({
-  host: "119.3.254.20",
-  user: "root",
-  port: "3406",
-  password: "wl14221..",
-  database: "face_sign",
+  host: "xxx.x.xxx.xx",
+  user: "xxx",
+  port: "xxx",
+  password: "xxx",
+  database: "xxx",
 });
 conntection.connect();
 // 执行sql语句基本命令函数

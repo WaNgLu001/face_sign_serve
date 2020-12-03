@@ -1,10 +1,10 @@
 const mysql = require("mysql"); // 连接数据库
 const conntection = mysql.createConnection({
-  host: "119.3.254.20",
-  user: "root",
-  password: "wl14221..",
-  port:'3406',
-  database: "qrcode_sign",
+  host: "xxx.x.xxx.xx",
+  user: "xxx",
+  port: "xxx",
+  password: "xxx",
+  database: "xxx",
 });
 // 执行sql语句基本命令函数
 const sqlFun = function (sql) {
@@ -43,13 +43,13 @@ const QRdeleteUser = (uids) => {
 };
 //删除周
 const QRdeleteWeeks = (week) => {
-  console.log(week)
+  console.log(week);
   return sqlFun(`DELETE FROM total_count WHERE week IN (${week});`);
-}
+};
 //删除全部周
 const QRdeleteAllWeeks = () => {
   return sqlFun(`DELETE FROM total_count ;`);
-}
+};
 
 // 根据uid保存用户签到时间
 const QRsignIn = (uid, date) => {
@@ -70,7 +70,6 @@ const QRsetFaceInfo = async (face_info) => {
 };
 // 根据查询用户签到时长
 const QRfindSignTime = (uid) => {
-
   return sqlFun(`SELECT signIn FROM sign_week WHERE uid = '${uid}'`);
 };
 // 根据周数查询当日已签到时长
@@ -189,6 +188,6 @@ module.exports = {
   resetMac,
   getMac,
   QRgetClassInfo,
-  QRdeleteWeeks ,
-  QRdeleteAllWeeks
+  QRdeleteWeeks,
+  QRdeleteAllWeeks,
 };
