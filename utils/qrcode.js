@@ -1,10 +1,10 @@
 const mysql = require("mysql"); // 连接数据库
 const conntection = mysql.createConnection({
-  host: "xxx.x.xxx.xx",
-  user: "xxx",
-  port: "xxx",
-  password: "xxx",
-  database: "xxx",
+  host: "",
+  user: "",
+  port: "",
+  password: "",
+  database: ""
 });
 // 执行sql语句基本命令函数
 const sqlFun = function (sql) {

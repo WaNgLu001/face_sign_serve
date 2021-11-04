@@ -4,7 +4,11 @@ var qs = require("querystring");
 var axios = require("axios");
 const schedule = require("node-schedule");
 const xlsx = require("node-xlsx").default;
+const { getData } = require("../utils/api");
 const {
+  updateIpAdderss,
+  findIpAdderss,
+  findFaceToken,
   signIn,
   findUserName,
   findSignTime,
@@ -21,6 +25,7 @@ const {
   deleteUser,
   deleteWeeks,
   deleteAllWeeks,
+  deleteUserFaceToken
 } = require("../utils/sql");
 const multer = require("multer");
 var fs = require("fs");
@@ -35,7 +40,7 @@ const {
   QRgetweek,
   QRfindAllUserTimer,
   QRdeleteWeeks,
-  QRdeleteAllWeeks
+  QRdeleteAllWeeks,
 } = require("../utils/qrcode");
 let access_token = {
   token: "",
@@ -54,13 +59,13 @@ router.post("/profile", upload.any(), function (req, res) {
     req.files[0].originalname === "qrcode_sign_user.xls"
   ) {
     var des_file = "./routes/uploads/" + req.files[0].originalname;
-    fs.readFile(req.files[0].path, function (err, data) { 
-      fs.writeFile(des_file, data, function (err) { 
+    fs.readFile(req.files[0].path, function (err, data) {
+      fs.writeFile(des_file, data, function (err) {
         if (err) {
           res.status(200).json({ status: 1, msg: "文件上传失败" });
         } else {
           const name = req.files[0].originalname.split(".")[0];
-		  console.log(name)
+          console.log(name);
           if (name === "face_sign_user") {
             BatchUpload(req.files[0].originalname.split(".")[1]);
           } else {
@@ -76,7 +81,7 @@ router.post("/profile", upload.any(), function (req, res) {
 });
 
 // 读取xlsx文件中的信息 -- 扫码
-async function QRBatchUpload(file) {
+function QRBatchUpload(file) {
   var sheets = xlsx.parse(`${__dirname}\\uploads/qrcode_sign_user.${file}`);
   let FaceInfo = sheets[0].data;
   FaceInfo.shift();
@@ -84,7 +89,7 @@ async function QRBatchUpload(file) {
 }
 
 // 读取xlsx文件中的信息 --- 人脸
-async function BatchUpload(file) {
+function BatchUpload(file) {
   var sheets = xlsx.parse(`${__dirname}\\uploads/face_sign_user.${file}`);
   let FaceInfo = sheets[0].data;
   FaceInfo.shift();
@@ -121,12 +126,25 @@ router.get("/", function (req, res) {
   res.json({});
 });
 // 判断当前用户ip是否有效
-router.get("/get_ip", function (req, res, next) {
-  res.status(200).json({
-    ip: req.ip.split(":")[3] === "59.48.111.138",
-  });
+router.get("/get_ip", async function (req, res, next) {
+  let result = await findIpAdderss(req.ip.split(":")[3])
+  console.log(result)
+  if(result.length){
+    res.status(200).json({ip:true})
+  }else{
+    res.status(200).json({ip:false})
+  }
 });
-
+router.get("/add_ip", async function (req, res, next) {
+  
+  let {affectedRows} = await updateIpAdderss(req.ip.split(":")[3])
+  // console.log(affectedRows)
+  if(affectedRows){
+    res.status(200).json({msg:'success'})
+  }else{
+    res.status(200).json({msg:'fail'})
+  }
+});
 // 人脸搜索
 router.post("/search", async function (req, res) {
   let { type, imgBase } = req.body; // 1 签到 2签退
@@ -147,6 +165,7 @@ router.post("/search", async function (req, res) {
     return;
   }
   // 拿到uid之后，修改数据库
+
   const uid = data.result.user_list[0].user_id;
   // 根据uid查询签到时长
   const data1 = await findSignTime(uid);
@@ -242,46 +261,61 @@ router.post("/addOneUser", function (req, res) {
   res.status(200).json({ status: 0, msg: "用户添加成功" });
 });
 // 根据uid删除用户
-router.get("/deleteUser", function (req, res) {
+router.get("/deleteUser", async function (req, res) {
   const { uids, type } = req.query;
+  console.log(uids)
   if (type === "1") {
-    deleteUser(uids);
+    var obj = {
+      api_key: "raS9hGQ--dXshlZqTDxUwTi6hxp8jTn7",
+      api_secret: "foqkTfjXAlx6jf9XELPD4hSsHyuLfeG7",
+    };
+    obj.faceset_token = "d718165bbb95376c25c1b0156e901d62";
+    obj.face_tokens = await findFaceToken(uids);
+      let result = await getData(obj, "/faceset/removeface");
+      if(result.face_removed!=0){
+        deleteUser(uids);
+        res.status(200).json({ status: 1, msg: "删除成功" });
+      }else{
+        res.status(200).json({ status: 0, msg: "删除失败" });
+      }
   } else {
     QRdeleteUser(uids);
+    res.status(200).json({ status: 1, msg: "删除成功" });
   }
-  res.status(200).json({ status: 0, msg: "删除成功" });
+  
 });
 //根据week删除周签到数据
-router.get("/deleteWeeks",async (req,res) => {
-  const {week,type} = req.query
+router.get("/deleteWeeks", async (req, res) => {
+  const { week, type } = req.query;
   let data;
-  if (type === "1") {//人脸
+  if (type === "1") {
+    //人脸
     data = await deleteWeeks(week);
   } else {
-     data = await QRdeleteWeeks(week);
+    data = await QRdeleteWeeks(week);
   }
-  if(data.affectedRows === 0){
+  if (data.affectedRows === 0) {
     res.status(200).json({ status: 1, msg: "删除失败" });
-  }else{
+  } else {
     res.status(200).json({ status: 0, msg: "删除成功" });
   }
-})
+});
 
-router.get("/deleteAllWeeks",async (req,res) => {
-  const {type} = req.query
+router.get("/deleteAllWeeks", async (req, res) => {
+  const { type } = req.query;
   let data;
-  if (type === "1") {//人脸
+  if (type === "1") {
+    //人脸
     data = await deleteAllWeeks();
   } else {
-     data = await QRdeleteAllWeeks();
+    data = await QRdeleteAllWeeks();
   }
-  if(data.affectedRows === 0){
+  if (data.affectedRows === 0) {
     res.status(200).json({ status: 1, msg: "删除失败" });
-  }else{
+  } else {
     res.status(200).json({ status: 0, msg: "删除成功" });
   }
-})
-
+});
 
 // 根据上传的xls文件批量添加用户
 // 修改当前周数

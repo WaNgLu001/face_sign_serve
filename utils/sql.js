@@ -1,11 +1,11 @@
 const mysql = require("mysql"); // 连接数据库
 const { sendEmail } = require("./email");
 const conntection = mysql.createConnection({
-  host: "xxx.x.xxx.xx",
-  user: "xxx",
-  port: "xxx",
-  password: "xxx",
-  database: "xxx",
+  host: "",
+  user: "",
+  port: "",
+  password: "",
+  database: "",
 });
 conntection.connect();
 // 执行sql语句基本命令函数
@@ -151,7 +151,40 @@ const getClassInfo = () => {
     `SELECT class,NAME,mon,tues,wed,thur,fri,sat,sun FROM sign_week WHERE class !='admin'`
   );
 };
+// 姓名与token对应
+const setUserFaceToken = async (uid, name,className, face_token) => {
+  const data = await sqlFun(`SELECT WEEK FROM sign_week LIMIT 1`);
+  let week = data[0].WEEK;
+  const getUserInfo = await sqlFun(`SELECT * FROM sign_week WHERE uid = ${uid}`);
+  console.log(getUserInfo);
+  if(getUserInfo.length) {
+    return false;
+  }
+    return sqlFun(
+    `INSERT INTO sign_week (uid,NAME,WEEK,class,face_token) VALUES ('${uid}','${name}','${week}','${className}','${face_token}')`
+  );
+};
+const deleteUserFaceToken = async (face_token) => {
+    return sqlFun(
+    `DELETE FROM sign_week WHERE face_token = '${face_token}'`
+  );
+};
+const findFaceToken = async(uids)=>{
+  return sqlFun(`SELECT face_token FROM sign_week WHERE uid = ${uids};`);
+}
+const findIpAdderss = (ip)=>{
+  // console.log(ip);
+  return sqlFun(`SELECT ip FROM sign_ip WHERE ip = "${ip}";`);
+}
+const updateIpAdderss = (ip)=>{
+  return sqlFun(
+    `INSERT INTO sign_ip (ip) VALUES ('${ip}')`
+  );
+}
 module.exports = {
+  updateIpAdderss,
+  findIpAdderss,
+  findFaceToken,
   getweek,
   test,
   signIn,
@@ -170,5 +203,7 @@ module.exports = {
   deleteUser,
   deleteWeeks,
   deleteAllWeeks,
+  setUserFaceToken,
+  deleteUserFaceToken
 };
 //
