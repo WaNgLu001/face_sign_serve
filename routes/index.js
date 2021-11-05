@@ -270,7 +270,8 @@ router.get("/deleteUser", async function (req, res) {
       api_secret: "foqkTfjXAlx6jf9XELPD4hSsHyuLfeG7",
     };
     obj.faceset_token = "d718165bbb95376c25c1b0156e901d62";
-    obj.face_tokens = await findFaceToken(uids);
+    let m = await findFaceToken(uids);
+    obj.face_tokens  = m[0].face_token
       let result = await getData(obj, "/faceset/removeface");
       if(result.face_removed!=0){
         deleteUser(uids);

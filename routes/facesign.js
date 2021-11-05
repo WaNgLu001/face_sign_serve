@@ -17,19 +17,23 @@ var {
   savaSignTime,
   getSignTime,
 } = require("../utils/sql");
-
+const api_key = "raS9hGQ--dXshlZqTDxUwTi6hxp8jTn7";
+const faceset_token = "d718165bbb95376c25c1b0156e901d62";
+const api_secret = "foqkTfjXAlx6jf9XELPD4hSsHyuLfeG7";
 //人脸识别
 var obj = {
   api_key: "raS9hGQ--dXshlZqTDxUwTi6hxp8jTn7",
   api_secret: "foqkTfjXAlx6jf9XELPD4hSsHyuLfeG7",
 };
 router.post("/checkface", async function (req, res) {
+  var obj1 = {
+    api_key: api_key,
+    api_secret: api_secret,
+  };
   let type = req.body.type;
-  obj.image_base64 = req.body.image_base64;
-  obj.faceset_token = "d718165bbb95376c25c1b0156e901d62";
-  const { data } = await getData(obj, "/search");
-  console.log(1111);
-  console.log(data);
+  obj1.image_base64 = req.body.image_base64;
+  obj1.faceset_token = faceset_token
+  const { data } = await getData(obj1, "/search");
   if (data?.faces?.length === 0) {
     res.status(200).json({ status: 0, msg: "照片中未识别到人脸" });
   } else if (data?.results?.length > 0 && data.results[0].confidence > 80) {
@@ -92,26 +96,36 @@ router.post("/checkface", async function (req, res) {
 });
 //添加人脸
 router.post("/addface", async function (req, res) {
+  let obj1 = {
+    api_key: api_key,
+    api_secret: api_secret,
+  };
   const { image_base64, uid, name, className } = req.body;
-  obj.image_base64 = image_base64;
+  obj1.image_base64 = image_base64;
   //人脸检测获取token
-  const { data } = await getData(obj, "/detect");
-  // console.log(data);
+  const { data } = await getData(obj1, "/detect");
   if (data?.faces?.length === 0) {
     res.status(200).json({ status: 0, msg: "照片中未识别到人脸" });
   } else {
     let face_token = data.faces[0].face_token;
+    let obj2 = {
+      api_key: api_key,
+    api_secret: api_secret,
+    };
+    obj2.faceset_token = faceset_token;
+    obj2.face_tokens = face_token;
 
-    obj.faceset_token = "d718165bbb95376c25c1b0156e901d62";
-    obj.face_tokens = face_token;
-
-    const { data: res1 } = await getData(obj, "/faceset/addface");
+    const { data: res1 } = await getData(obj2, "/faceset/addface");
     if (res1.face_added >= 1) {
-      obj.user_id = name + "|" + uid;
-      obj.face_token = face_token;
+      let obj3 = {
+        api_key: api_key,
+        api_secret: api_secret,
+      };
+      obj3.user_id = name + "|" + uid;
+      obj3.face_token = face_token;
       let result = await setUserFaceToken(uid, name, className, face_token);
       if (result) {
-        const res2 = await getData(obj, "/face/setuserid");
+        const res2 = await getData(obj3, "/face/setuserid");
         if (res2.status === 200) {
           res.status(200).json({
             status: res2.status,
@@ -133,12 +147,13 @@ router.post("/addface", async function (req, res) {
 // router.post("/deleteface", async function (req, res) {
 //   obj.faceset_token = "d718165bbb95376c25c1b0156e901d62";
 //   obj.face_tokens = req.body.face;
-//   let result = await deleteUserFaceToken(req.body.face);
-//   if (result.affectedRows > 0) {
+//   // let result = await deleteUserFaceToken(req.body.face);
+
+//   // if (result.affectedRows > 0) {
 //     const result = await getData(obj, "/faceset/removeface");
 //     res.status(200).json({ status: 1, msg: result.data });
-//   } else {
-//     res.status(200).json({ status: 0, msg: "删除失败" });
-//   }
+//   // } else {
+//   //   res.status(200).json({ status: 0, msg: "删除失败" });
+//   // }
 // });
 module.exports = router;
